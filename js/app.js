@@ -58,6 +58,7 @@
       'im.unsupported': '這個瀏覽器不支援讀取這種連結，請改用匯出備份檔。',
       'amount.show': '點擊顯示金額', 'amount.hide': '點擊隱藏金額',
       'qty.minus': '減少一個', 'qty.plus': '增加一個', 'qty.label': n => `已繳稅 ×${n}`,
+      'qty.input': '已繳稅數量（輸入 0 取消繳稅）',
       'stat.qty': n => `共 ${n} 個`,
       expand: '展開', collapse: '收合',
       'expand.all': '全部展開', 'collapse.all': '全部收合',
@@ -113,6 +114,7 @@
       'im.unsupported': 'このブラウザではこの形式のリンクを開けません。バックアップファイルをご利用ください。',
       'amount.show': 'タップで金額を表示', 'amount.hide': 'タップで金額を非表示',
       'qty.minus': '1つ減らす', 'qty.plus': '1つ増やす', 'qty.label': n => `納税済 ×${n}`,
+      'qty.input': '納税済の数量（0 で納税を取り消し）',
       'stat.qty': n => `計 ${n} 個`,
       expand: '開く', collapse: '閉じる',
       'expand.all': 'すべて開く', 'collapse.all': 'すべて閉じる',
@@ -225,7 +227,7 @@
   }
 
   /* ---------------- storage ---------------- */
-  const MAX_QTY = 99;
+  const MAX_QTY = 99999;
   // 舊版紀錄是 { key: true }，新版是 { key: 數量 }；兩種都接受
   function normalizeOwned(obj) {
     const out = {};
@@ -352,7 +354,7 @@
         ${owned ? `
         <div class="qty" role="group" aria-label="${esc(t('qty.label', qty))}">
           <button type="button" class="qty-btn" data-step="${esc(it.key)}" data-delta="-1" aria-label="${esc(t('qty.minus'))}">−</button>
-          <span class="qty-label" aria-live="polite">${esc(t('qty.label', qty))}</span>
+          <label class="qty-label">×<input type="number" class="qty-input" data-qty="${esc(it.key)}" value="${qty}" min="0" max="${MAX_QTY}" step="1" inputmode="numeric" aria-label="${esc(t('qty.input'))}"></label>
           <button type="button" class="qty-btn" data-step="${esc(it.key)}" data-delta="1" aria-label="${esc(t('qty.plus'))}"${qty >= MAX_QTY ? ' disabled' : ''}>+</button>
         </div>` : `
         <button type="button" class="pay-btn" data-toggle="${esc(it.key)}">${esc(t('pay'))}</button>`}
@@ -555,6 +557,28 @@
       if (head && !e.target.closest('a, button')) {
         toggleExpand(head.closest('.project').dataset.code, false);
       }
+    });
+    // Typed quantity: commit on change / focusout (Chrome fires no `change` when a number input is
+    // cleared), clamp to 0..MAX_QTY; 0 un-owns the item, empty or invalid input restores the stored value.
+    function commitQty(inp) {
+      const key = inp.dataset.qty;
+      const cur = state.owned[key] || 0;
+      const raw = inp.value.trim();
+      const n = Math.floor(Number(raw));
+      const next = raw === '' || !Number.isFinite(n) ? cur : Math.max(0, Math.min(MAX_QTY, n));
+      if (next === cur) { inp.value = cur; return; }
+      if (next) state.owned[key] = next; else delete state.owned[key];
+      saveOwned();
+      rerenderProject(key.slice(0, key.lastIndexOf('#')));
+      focusItem(key, next ? '[data-qty]' : '[data-toggle]');
+    }
+    ['change', 'focusout'].forEach(type => $('#list').addEventListener(type, e => {
+      const inp = e.target.closest('[data-qty]');
+      if (inp) commitQty(inp);
+    }));
+    $('#list').addEventListener('keydown', e => {
+      const inp = e.target.closest('[data-qty]');
+      if (inp && e.key === 'Enter') { e.preventDefault(); inp.blur(); }
     });
     $('#lightbox').addEventListener('click', e => { if (e.target.id === 'lightbox') e.target.close(); });
 
