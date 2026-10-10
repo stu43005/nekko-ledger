@@ -20,6 +20,9 @@
   color-scheme: light;
   --radius: 16px;
   --shadow: 0 6px 24px rgba(194, 84, 15, 0.08);
+  /* Lightbox shadow / backdrop are tinted with the ink colour; talent themes override them. */
+  --lb-shadow: 0 20px 60px rgba(58, 38, 24, .3);
+  --lb-backdrop: rgba(58, 38, 24, .6);
   --font-zh: "Noto Sans TC", "Noto Sans JP", "PingFang TC", "Hiragino Sans", "Microsoft JhengHei", sans-serif;
   /* 標題圓體：繁中用昭源圓體（繁體字齊全），缺的字依序補 M+ Rounded、Noto Sans TC */
   --font-round: "Chiron GoRound TC", "M PLUS Rounded 1c", var(--font-zh);
@@ -96,6 +99,19 @@ button, input, select { font: inherit; color: inherit; }
   background: var(--surface); cursor: pointer; font-size: 1rem; line-height: 1;
 }
 .icon-btn:hover { background: var(--accent-soft); }
+/* member switcher (rendered by js/members.js) */
+.member-switch { display: inline-flex; border: 1.5px solid var(--accent); border-radius: 999px; overflow: hidden; }
+.member-switch a {
+  display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px;
+  font-size: .8rem; font-weight: 700; line-height: 1.6; text-decoration: none; white-space: nowrap;
+  color: var(--accent-text);
+}
+.member-switch a::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--mc); }
+.member-switch a:hover:not([aria-current]) { background: var(--accent-soft); }
+.member-switch a[aria-current="page"] { background: var(--accent); color: #fff; }
+.member-switch a[aria-current="page"]::before { box-shadow: 0 0 0 1.5px #fff; }
+.member-switch a:focus-visible { outline: 2px solid var(--accent-text); outline-offset: -4px; }
+.member-switch a[aria-current="page"]:focus-visible { outline-color: #fff; }
 
 /* ---------- header ---------- */
 .site-header {
@@ -307,9 +323,9 @@ select {
 dialog#lightbox {
   border: 0; border-radius: var(--radius); padding: 16px; max-width: min(92vw, 720px);
   background: var(--card); color: var(--ink);
-  box-shadow: 0 20px 60px rgba(58, 38, 24, .3);
+  box-shadow: var(--lb-shadow);
 }
-dialog#lightbox::backdrop { background: rgba(58, 38, 24, .6); }
+dialog#lightbox::backdrop { background: var(--lb-backdrop); }
 dialog#lightbox img { max-height: 75vh; margin: 0 auto; object-fit: contain; }
 .lb-caption { margin: 10px 0 0; text-align: center; font-size: .9rem; }
 .lb-close {
