@@ -1,0 +1,78 @@
+name: Sync official shop
+
+# Daily: fetch the official shop collections, append new projects to each
+# member's dataset (tools/sync_shop.py, append-only) and open / refresh a PR.
+
+on:
+  schedule:
+    - cron: '17 3 * * *' # 12:17 JST
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: sync-shop
+  cancel-in-progress: false
+
+env:
+  BRANCH: shop-sync
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch official shop
+        # Own collection of every profile plus its name_collections (tools/profiles.py).
+        run: python3 -I tools/fetch_shop.py "$RUNNER_TEMP/shop" momosuzunene azki hoshimachisuisei
+
+      - name: Append new projects
+        run: |
+          cp -r data "$RUNNER_TEMP/before-nene"
+          cp -r suisei/data "$RUNNER_TEMP/before-suisei"
+          python3 -I tools/sync_shop.py nene --shop-raw "$RUNNER_TEMP/shop" --summary "$RUNNER_TEMP/summary.md"
+          python3 -I tools/sync_shop.py suisei --shop-raw "$RUNNER_TEMP/shop" --summary "$RUNNER_TEMP/summary.md"
+
+      - name: Validate
+        run: |
+          python3 -I tools/validate.py data --before "$RUNNER_TEMP/before-nene" --site-parsers
+          python3 -I tools/validate.py suisei/data --before "$RUNNER_TEMP/before-suisei" --site-parsers
+
+      - name: Open or update pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ -z "$(git status --porcelain -- data suisei/data tools/shop_seen)" ]; then
+            echo 'No new products.'
+            exit 0
+          fi
+          today=$(TZ=Asia/Tokyo date +%Y/%-m/%-d)
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -C "$BRANCH"
+          git add data suisei/data tools/shop_seen
+          git commit -m "官方商店新增企劃（$today）"
+          git push --force origin "$BRANCH"
+
+          body="$RUNNER_TEMP/body.md"
+          {
+            echo "由 \`sync-shop\` workflow 自動產生（$today）：官方商店的新商品頁，依 \`tools/sync_shop.py\` 規則只新增、不修改既有資料。"
+            echo
+            echo '合併前請確認：變體是否真的是本人的、goods type 是否需要補、待確認項目是否要收錄。這個分支每次執行都會從 main 重建，要修改請合併後在 main 上改。'
+            echo
+            if [ -s "$RUNNER_TEMP/summary.md" ]; then
+              cat "$RUNNER_TEMP/summary.md"
+            else
+              echo "（只有 \`tools/shop_seen\` 更新：新商品頁沒有產生任何資料列。）"
+            fi
+          } > "$body"
+
+          pr=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')
+          if [ -n "$pr" ]; then
+            gh pr edit "$pr" --title "官方商店新增企劃（$today）" --body-file "$body"
+          else
+            gh pr create --base main --head "$BRANCH" --title "官方商店新增企劃（$today）" --body-file "$body"
+          fi
