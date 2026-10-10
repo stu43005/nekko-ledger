@@ -1,25 +1,28 @@
-/* ねっ子繳稅紀錄簿 — 桃鈴ねね 周邊收集清單
- * Data source: data/goods.csv in this repo. Owned records are stored in the browser's localStorage.
+/* Merch ledger (繳稅紀錄簿) — shared by every talent site.
+ * Talent-specific settings (data path, storage key, texts, colours) come from window.SITE (site.js).
+ * Data source: the goods CSV of the current talent. Owned records are stored in the browser's localStorage.
  */
 (function () {
   'use strict';
 
-  const CSV_URL = 'data/goods.csv';
-  const STORAGE_KEY = 'nene-ledger-v1';
+  // Talent config. Under node (tests) without a window, fall back to the root site.js (Nene).
+  const SITE = (typeof window !== 'undefined' && window.SITE) ||
+    (typeof require === 'function' ? require('../site.js') : {});
+  const PAGE = 'ledger';
+  const CSV_URL = SITE.data && SITE.data.goods;
+  const STORAGE_KEY = SITE.storage && SITE.storage.ledger;
 
+  // Language / theme preferences are shared by all pages of all talents.
   const LANG_KEY = 'nene-ledger-lang';
   const THEME_KEY = 'nene-ledger-theme';
   const PROJECT_TYPES = { anniversary: 1, birthday: 1 };
   const GOODS_ORDER = ['acrylic stand', 'badge', 'plushie', 'keychain'];
 
+  // Generic strings; talent-specific ones (title, lead, footer1, ...) are merged in from SITE.i18n by t().
   const I18N = {
     'zh-Hant': {
-      'doc.title': 'ねっ子繳稅紀錄簿｜桃鈴ねね 周邊收集清單',
-      'doc.desc': '給ねっ子們的桃鈴ねね周邊收集清單。非官方粉絲製作。',
       brand: '遜炮偶像株式會社',
       'nav.ledger': '繳稅紀錄簿', 'nav.voice': 'Voice 收集簿', 'nav.log': '更新日記',
-      title: 'ねっ子繳稅紀錄簿',
-      lead: '把每一筆為ねね繳的稅記下來。點「繳稅」標記已入手的周邊，紀錄只存在你這台裝置的瀏覽器裡。',
       'stat.count': '已繳稅', 'stat.unit': '件', 'stat.yen': '繳稅總額', 'stat.bar': '收集進度',
       'search.ph': '搜尋企劃或周邊名稱…',
       'filter.toggle': '篩選', 'filter.project': '企劃', 'filter.goods': '種類', 'filter.year': '年份',
@@ -66,16 +69,11 @@
       'import.fail': '匯入失敗：檔案格式不正確。',
       'theme.toLight': '切換為淺色模式', 'theme.toDark': '切換為深色模式',
       updated: '最後更新',
-      footer1: '本站為ねっ子自製的非官方粉絲網站，與 COVER 株式会社無關。',
       footer2: '所有商品圖片、名稱與相關著作權皆歸屬於 COVER 株式会社 及各權利人。價格以日圓標示，海外商品依當時匯率換算，僅供參考。',
     },
     ja: {
-      'doc.title': 'ねっ子納税記録簿｜桃鈴ねね グッズコレクション',
-      'doc.desc': 'ねっ子のための桃鈴ねねグッズ収集リスト。非公式ファンサイトです。',
       brand: '遜炮偶像株式会社',
       'nav.ledger': '納税記録簿', 'nav.voice': 'ボイスコレクション', 'nav.log': '更新日記',
-      title: 'ねっ子納税記録簿',
-      lead: 'ねねのために納めた税をひとつずつ記録しよう。「納税」を押して入手済みのグッズをチェック。記録はこの端末のブラウザ内にだけ保存されます。',
       'stat.count': '納税済み', 'stat.unit': '点', 'stat.yen': '納税総額', 'stat.bar': '収集の進み具合',
       'search.ph': '企画名・グッズ名で検索…',
       'filter.toggle': '絞り込み', 'filter.project': '企画', 'filter.goods': '種類', 'filter.year': '年',
@@ -122,7 +120,6 @@
       'import.fail': '読み込みに失敗しました。ファイル形式が正しくありません。',
       'theme.toLight': 'ライトモードに切り替え', 'theme.toDark': 'ダークモードに切り替え',
       updated: '最終更新',
-      footer1: '本サイトはねっ子による非公式のファンサイトで、カバー株式会社とは一切関係ありません。',
       footer2: '掲載している商品画像・名称およびそれらに関する著作権は、すべてカバー株式会社および各権利者に帰属します。価格は日本円表記で、海外商品は当時のレートで換算した参考価格です。',
     },
   };
@@ -132,8 +129,13 @@
     return /^ja/i.test(navigator.language || '') ? 'ja' : 'zh-Hant';
   }
   let lang = detectLang();
+  // Lookup order: SITE.i18n '<page>.<key>' → SITE.i18n '<key>' → generic I18N.
   const t = (key, ...args) => {
-    const v = (I18N[lang] || I18N['zh-Hant'])[key];
+    const l = I18N[lang] ? lang : 'zh-Hant';
+    const s = (SITE.i18n && SITE.i18n[l]) || {};
+    let v = s[PAGE + '.' + key];
+    if (v === undefined) v = s[key];
+    if (v === undefined) v = I18N[l][key];
     return typeof v === 'function' ? v(...args) : (v == null ? key : v);
   };
 
@@ -594,11 +596,11 @@
     window.addEventListener('hashchange', handleHash);
 
     $('#btn-export').addEventListener('click', () => {
-      const data = { app: 'nene-ledger', version: 2, exportedAt: new Date().toISOString(), owned: state.owned };
+      const data = { app: SITE.exportApp.ledger, version: 2, exportedAt: new Date().toISOString(), owned: state.owned };
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `ねっ子繳稅紀錄_${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `${SITE.exportFile.ledger}_${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       setTimeout(() => URL.revokeObjectURL(a.href), 1000);
     });
@@ -619,7 +621,7 @@
   }
 
   /* ---------------- 轉移紀錄（連結 + QR Code）與匯入 ---------------- */
-  const TR = window.NeneTransfer;
+  const TR = typeof window !== 'undefined' ? window.LedgerTransfer : null;
 
   function ownedStats(o) {
     let kinds = 0, pieces = 0;
@@ -706,6 +708,7 @@
     $('#tr-link').setAttribute('aria-label', t('tr.link'));
     document.querySelectorAll('.lang-switch button').forEach(b =>
       b.setAttribute('aria-pressed', String(b.dataset.lang === lang)));
+    if (window.MemberSwitch) window.MemberSwitch.render(lang);
     updateThemeButton();
   }
   function setLang(next) {
@@ -729,7 +732,7 @@
     b.setAttribute('aria-label', dark ? t('theme.toLight') : t('theme.toDark'));
     b.title = b.getAttribute('aria-label');
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', dark ? '#09090a' : '#e0661b');
+    if (meta) meta.setAttribute('content', dark ? '#09090a' : SITE.themeColor);
   }
   function toggleTheme() {
     const next = isDark() ? 'light' : 'dark';
