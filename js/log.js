@@ -1,15 +1,21 @@
-/* 網頁更新日記 — 更新紀錄與尚未收錄的周邊企劃清單
- * Data source: data/updates.csv (release notes) and data/todo.csv (TODO) in this repo.
+/* 網頁更新日記 — 更新紀錄與尚未收錄的周邊企劃清單; shared by every talent site.
+ * Data source: the current talent's updates CSV (release notes) and todo CSV (TODO), paths from window.SITE.
  * Language and dark-mode settings are shared with the other pages.
  */
 (function () {
   'use strict';
 
-  const NOTES_URL = 'data/updates.csv';   // columns: date, note
-  const TODO_URL = 'data/todo.csv';       // columns: TODO, Website
+  // Talent config. Under node (tests) without a window, fall back to the root site.js (Nene).
+  const SITE = (typeof window !== 'undefined' && window.SITE) ||
+    (typeof require === 'function' ? require('../site.js') : {});
+  const PAGE = 'log';
+  const NOTES_URL = SITE.data && SITE.data.updates;   // columns: date, note
+  const TODO_URL = SITE.data && SITE.data.todo;       // columns: TODO, Website
+  // Language / theme preferences are shared by all pages of all talents.
   const LANG_KEY = 'nene-ledger-lang';
   const THEME_KEY = 'nene-ledger-theme';
 
+  // Generic strings; talent-specific ones (footer1, ...) are merged in from SITE.i18n by t().
   const I18N = {
     'zh-Hant': {
       'doc.title': '網頁更新日記｜遜炮偶像株式會社',
@@ -30,7 +36,6 @@
       failed: '讀取失敗，請稍後再試。', retry: '重新讀取',
       'theme.toDark': '切換深色模式', 'theme.toLight': '切換淺色模式',
       updated: '最後更新',
-      footer1: '本站為ねっ子自製的非官方粉絲網站，與 COVER 株式会社無關。',
       footer2: '所有商品圖片、名稱與相關著作權皆歸屬於 COVER 株式会社 及各權利人。'
     },
     ja: {
@@ -52,7 +57,6 @@
       failed: '読み込みに失敗しました。しばらくしてからお試しください。', retry: '再読み込み',
       'theme.toDark': 'ダークモードに切り替え', 'theme.toLight': 'ライトモードに切り替え',
       updated: '最終更新',
-      footer1: '本サイトはねっ子による非公式のファンサイトで、カバー株式会社とは一切関係ありません。',
       footer2: '掲載している商品画像・名称およびそれらに関する著作権は、すべてカバー株式会社および各権利者に帰属します。'
     }
   };
@@ -62,8 +66,13 @@
     return /^ja/i.test(navigator.language || '') ? 'ja' : 'zh-Hant';
   }
   let lang = detectLang();
+  // Lookup order: SITE.i18n '<page>.<key>' → SITE.i18n '<key>' → generic I18N.
   const t = (key, ...args) => {
-    const v = (I18N[lang] || I18N['zh-Hant'])[key];
+    const l = I18N[lang] ? lang : 'zh-Hant';
+    const s = (SITE.i18n && SITE.i18n[l]) || {};
+    let v = s[PAGE + '.' + key];
+    if (v === undefined) v = s[key];
+    if (v === undefined) v = I18N[l][key];
     return typeof v === 'function' ? v(...args) : (v == null ? key : v);
   };
 
@@ -153,6 +162,7 @@
     document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
     document.querySelectorAll('.lang-switch button').forEach(b =>
       b.setAttribute('aria-pressed', String(b.dataset.lang === lang)));
+    if (window.MemberSwitch) window.MemberSwitch.render(lang);
     updateThemeButton();
   }
   function setLang(next) {
@@ -175,7 +185,7 @@
     b.setAttribute('aria-label', dark ? t('theme.toLight') : t('theme.toDark'));
     b.title = b.getAttribute('aria-label');
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', dark ? '#09090a' : '#e0661b');
+    if (meta) meta.setAttribute('content', dark ? '#09090a' : SITE.themeColor);
   }
   function toggleTheme() {
     const next = isDark() ? 'light' : 'dark';
