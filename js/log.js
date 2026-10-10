@@ -1,21 +1,20 @@
 /* 網頁更新日記 — 更新紀錄與尚未收錄的周邊企劃清單
- * 資料來源：Google 試算表發佈的兩個 CSV 分頁（Release Note、TODO）。
- * 語言與深色模式設定和其他頁面共用。
+ * Data source: data/updates.csv (release notes) and data/todo.csv (TODO) in this repo.
+ * Language and dark-mode settings are shared with the other pages.
  */
 (function () {
   'use strict';
 
-  const SHEET = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRzbU98iI2i-dAfZK00DziH76BV-blVra_k7dh1ffVoGIiE-beegRPM8fwT0aV1iqD3gfc3DgLkZMHb/pub?single=true&output=csv&gid=';
-  const NOTES_URL = SHEET + '2087235395';   // 欄位：date, note
-  const TODO_URL = SHEET + '1081125265';    // 欄位：TODO, Website
-  const LANG_KEY = 'azki-ledger-lang';
-  const THEME_KEY = 'azki-ledger-theme';
+  const NOTES_URL = 'data/updates.csv';   // columns: date, note
+  const TODO_URL = 'data/todo.csv';       // columns: TODO, Website
+  const LANG_KEY = 'nene-ledger-lang';
+  const THEME_KEY = 'nene-ledger-theme';
 
   const I18N = {
     'zh-Hant': {
-      'doc.title': '網頁更新日記｜開拓者の愉悅部',
-      'doc.desc': '開拓者の愉悅部的更新紀錄，以及尚未收錄的周邊企劃清單。非官方粉絲製作。',
-      brand: '開拓者の愉悅部',
+      'doc.title': '網頁更新日記｜遜炮偶像株式會社',
+      'doc.desc': '遜炮偶像株式會社的更新紀錄，以及尚未收錄的周邊企劃清單。非官方粉絲製作。',
+      brand: '遜炮偶像株式會社',
       'nav.ledger': '繳稅紀錄簿', 'nav.voice': 'Voice 收集簿', 'nav.log': '更新日記',
       title: '網頁更新日記',
       lead: '記錄網站的更新內容，以及還沒收錄進繳稅紀錄簿的周邊企劃。',
@@ -31,13 +30,13 @@
       failed: '讀取失敗，請稍後再試。', retry: '重新讀取',
       'theme.toDark': '切換深色模式', 'theme.toLight': '切換淺色模式',
       updated: '最後更新',
-      footer1: '本站為開拓者自製的非官方粉絲網站，與 COVER 株式会社無關。',
+      footer1: '本站為ねっ子自製的非官方粉絲網站，與 COVER 株式会社無關。',
       footer2: '所有商品圖片、名稱與相關著作權皆歸屬於 COVER 株式会社 及各權利人。'
     },
     ja: {
-      'doc.title': 'サイト更新日記｜開拓者の愉悦部',
-      'doc.desc': '開拓者の愉悦部の更新履歴と、まだ掲載していないグッズ企画の一覧。非公式ファンサイトです。',
-      brand: '開拓者の愉悦部',
+      'doc.title': 'サイト更新日記｜遜炮偶像株式会社',
+      'doc.desc': '遜炮偶像株式会社の更新履歴と、まだ掲載していないグッズ企画の一覧。非公式ファンサイトです。',
+      brand: '遜炮偶像株式会社',
       'nav.ledger': '納税記録簿', 'nav.voice': 'ボイスコレクション', 'nav.log': '更新日記',
       title: 'サイト更新日記',
       lead: 'サイトの更新内容と、まだ納税記録簿に掲載していないグッズ企画をまとめています。',
@@ -53,7 +52,7 @@
       failed: '読み込みに失敗しました。しばらくしてからお試しください。', retry: '再読み込み',
       'theme.toDark': 'ダークモードに切り替え', 'theme.toLight': 'ライトモードに切り替え',
       updated: '最終更新',
-      footer1: '本サイトは開拓者による非公式のファンサイトで、カバー株式会社とは一切関係ありません。',
+      footer1: '本サイトはねっ子による非公式のファンサイトで、カバー株式会社とは一切関係ありません。',
       footer2: '掲載している商品画像・名称およびそれらに関する著作権は、すべてカバー株式会社および各権利者に帰属します。'
     }
   };
@@ -176,7 +175,7 @@
     b.setAttribute('aria-label', dark ? t('theme.toLight') : t('theme.toDark'));
     b.title = b.getAttribute('aria-label');
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', dark ? '#09090a' : '#f4348b');
+    if (meta) meta.setAttribute('content', dark ? '#09090a' : '#e0661b');
   }
   function toggleTheme() {
     const next = isDark() ? 'light' : 'dark';
