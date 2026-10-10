@@ -1,29 +1,29 @@
-/* AZKi Voice 收集簿 — AZKi 參與的官方ボイス商品清單
- * 資料來源：Google 試算表發佈的 CSV（AZKi voice 分頁）。收集紀錄存在瀏覽器 localStorage。
- * 語言與深色模式設定和繳稅紀錄簿共用。這一頁不計算金額。
+/* ねね Voice 收集簿 — 桃鈴ねね 參與的官方ボイス商品清單
+ * Data source: data/voice.csv in this repo. Collected records are stored in the browser's localStorage.
+ * Language and dark-mode settings are shared with the ledger page. This page does not total prices.
  */
 (function () {
   'use strict';
 
-  const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRzbU98iI2i-dAfZK00DziH76BV-blVra_k7dh1ffVoGIiE-beegRPM8fwT0aV1iqD3gfc3DgLkZMHb/pub?gid=1253772289&single=true&output=csv';
-  const STORAGE_KEY = 'azki-voice-v1';
-  const LANG_KEY = 'azki-ledger-lang';
-  const THEME_KEY = 'azki-ledger-theme';
+  const CSV_URL = 'data/voice.csv';
+  const STORAGE_KEY = 'nene-voice-v1';
+  const LANG_KEY = 'nene-ledger-lang';
+  const THEME_KEY = 'nene-ledger-theme';
 
   const I18N = {
     'zh-Hant': {
-      'doc.title': 'AZKi Voice 收集簿｜開拓者の愉悅部',
-      'doc.desc': '整理 AZKi 參與的官方ボイス商品，記錄自己收集了哪些。非官方粉絲製作。',
-      brand: '開拓者の愉悅部',
+      'doc.title': 'ねね Voice 收集簿｜遜炮偶像株式會社',
+      'doc.desc': '整理桃鈴ねね參與的官方ボイス商品，記錄自己收集了哪些。非官方粉絲製作。',
+      brand: '遜炮偶像株式會社',
       'nav.ledger': '繳稅紀錄簿', 'nav.voice': 'Voice 收集簿', 'nav.log': '更新日記',
-      title: 'AZKi Voice 收集簿',
-      lead: '整理 AZKi 參與的官方ボイス商品。點「收集」標記已入手的 Voice，紀錄只存在你這台裝置的瀏覽器裡。',
+      title: 'ねね Voice 收集簿',
+      lead: '整理桃鈴ねね參與的官方ボイス商品。點「收集」標記已入手的 Voice，紀錄只存在你這台裝置的瀏覽器裡。',
       'stat.count': '已收集', 'stat.unit': '件', 'stat.complete': '全收集企劃', 'stat.bar': '收集進度',
       'search.ph': '搜尋企劃或 Voice 名稱…',
       'filter.toggle': '篩選', 'filter.kind': '企劃', 'filter.year': '年份',
       'filter.status': '狀態', 'filter.sort': '排序', 'filter.record': '紀錄',
       'chip.all': '全部',
-      'kind.solo': 'AZKi 個人', 'kind.group': '多人企劃', 'kind.resale': '再販',
+      'kind.solo': 'ねね 個人', 'kind.group': '多人企劃', 'kind.resale': '再販',
       'status.owned': '已收集', 'status.missing': '未收集',
       'sort.desc': '新 → 舊', 'sort.asc': '舊 → 新',
       'btn.export': '匯出備份', 'btn.import': '匯入備份',
@@ -43,22 +43,22 @@
       'import.confirm': '要用備份檔取代目前的 Voice 收集紀錄嗎？', 'import.fail': '匯入失敗：檔案格式不正確。',
       'theme.toLight': '切換為淺色模式', 'theme.toDark': '切換為深色模式',
       updated: '最後更新',
-      footer1: '本站為開拓者自製的非官方粉絲網站，與 COVER 株式会社無關。',
+      footer1: '本站為ねっ子自製的非官方粉絲網站，與 COVER 株式会社無關。',
       footer2: '所有商品圖片、名稱與相關著作權皆歸屬於 COVER 株式会社 及各權利人。',
     },
     ja: {
-      'doc.title': 'AZKi ボイスコレクション｜開拓者の愉悅部',
-      'doc.desc': 'AZKi が参加した公式ボイス商品の一覧と、自分の収集記録。非公式ファンサイトです。',
-      brand: '開拓者の愉悅部',
+      'doc.title': 'ねね ボイスコレクション｜遜炮偶像株式会社',
+      'doc.desc': '桃鈴ねねが参加した公式ボイス商品の一覧と、自分の収集記録。非公式ファンサイトです。',
+      brand: '遜炮偶像株式会社',
       'nav.ledger': '納税記録簿', 'nav.voice': 'ボイスコレクション', 'nav.log': '更新日記',
-      title: 'AZKi ボイスコレクション',
-      lead: 'AZKi が参加した公式ボイス商品の一覧です。「収集」を押して入手済みのボイスをチェック。記録はこの端末のブラウザ内にだけ保存されます。',
+      title: 'ねね ボイスコレクション',
+      lead: '桃鈴ねねが参加した公式ボイス商品の一覧です。「収集」を押して入手済みのボイスをチェック。記録はこの端末のブラウザ内にだけ保存されます。',
       'stat.count': '収集済み', 'stat.unit': '点', 'stat.complete': 'コンプ企画', 'stat.bar': '収集の進み具合',
       'search.ph': '企画名・ボイス名で検索…',
       'filter.toggle': '絞り込み', 'filter.kind': '企画', 'filter.year': '年',
       'filter.status': '状態', 'filter.sort': '並び順', 'filter.record': '記録',
       'chip.all': 'すべて',
-      'kind.solo': 'AZKi 単独', 'kind.group': '複数タレント', 'kind.resale': '再販',
+      'kind.solo': 'ねね 単独', 'kind.group': '複数タレント', 'kind.resale': '再販',
       'status.owned': '収集済み', 'status.missing': '未収集',
       'sort.desc': '新しい順', 'sort.asc': '古い順',
       'btn.export': 'バックアップを書き出す', 'btn.import': 'バックアップを読み込む',
@@ -78,7 +78,7 @@
       'import.confirm': '現在のボイス収集記録をバックアップで置き換えますか？', 'import.fail': '読み込みに失敗しました。ファイル形式が正しくありません。',
       'theme.toLight': 'ライトモードに切り替え', 'theme.toDark': 'ダークモードに切り替え',
       updated: '最終更新',
-      footer1: '本サイトは開拓者による非公式のファンサイトで、カバー株式会社とは一切関係ありません。',
+      footer1: '本サイトはねっ子による非公式のファンサイトで、カバー株式会社とは一切関係ありません。',
       footer2: '掲載している商品画像・名称およびそれらに関する著作権は、すべてカバー株式会社および各権利者に帰属します。',
     },
   };
@@ -128,7 +128,10 @@
   // 紀錄鍵：企劃代號#Voice 名稱（去掉空白、全形括號轉半形，避免表格裡寫法不一致造成對不上）
   const normName = s => String(s || '').replace(/\s+/g, '').replace(/（/g, '(').replace(/）/g, ')');
 
-  const SOLO_RE = /^(AZKi(?![a-z])|スターティングボイス\s*AZKi)/;
+  // Nene solo projects: name (after optional 【…】 prefixes such as 【再販】) starts with "桃鈴ねね" / "ねね" /
+  // "Momosuzu Nene" / "Nene" (not as part of a longer latin word), or with "スターティングボイス" followed by
+  // her name; or the title is quoted as 「ねねの…」 (e.g. ホロライブボイスドラマ「ねねのなつやすみ」).
+  const SOLO_RE = /^(?:【[^】]*】\s*)*(?:桃鈴\s*ねね|ねね|Momosuzu\s*Nene(?![a-z])|Nene(?![a-z])|スターティングボイス\s*(?:桃鈴\s*)?ねね)|「ねねの/i;
   const RESALE_RE = /再販/;
 
   function buildProjects(rows) {
@@ -387,11 +390,11 @@
     $('#lightbox').addEventListener('click', e => { if (e.target.id === 'lightbox') e.target.close(); });
 
     $('#btn-export').addEventListener('click', () => {
-      const data = { app: 'azki-voice', version: 1, exportedAt: new Date().toISOString(), owned: state.owned };
+      const data = { app: 'nene-voice', version: 1, exportedAt: new Date().toISOString(), owned: state.owned };
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `開拓者Voice收集紀錄_${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `ねっ子Voice收集紀錄_${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       setTimeout(() => URL.revokeObjectURL(a.href), 1000);
     });
@@ -401,7 +404,7 @@
       try {
         const data = JSON.parse(await file.text());
         const owned = data.owned || data;
-        if (typeof owned !== 'object' || (data.app && data.app !== 'azki-voice')) throw new Error('格式不符');
+        if (typeof owned !== 'object' || (data.app && data.app !== 'nene-voice')) throw new Error('格式不符');
         if (!confirm(t('import.confirm'))) return;
         state.owned = normalizeOwned(owned);
         saveOwned();
@@ -448,7 +451,7 @@
     b.setAttribute('aria-label', dark ? t('theme.toLight') : t('theme.toDark'));
     b.title = b.getAttribute('aria-label');
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', dark ? '#09090a' : '#f4348b');
+    if (meta) meta.setAttribute('content', dark ? '#09090a' : '#e0661b');
   }
   function toggleTheme() {
     const next = isDark() ? 'light' : 'dark';
