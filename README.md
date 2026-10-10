@@ -74,6 +74,16 @@ js/vendor/qrcode.js  QR Code 產生器（第三方，MIT）
 - 網頁讀取時使用 `cache: 'no-cache'`，但 GitHub Pages 本身仍可能有幾分鐘的快取。
 - 各 CSV 路徑設定在各成員 `site.js` 的 `data`。
 
+### 官方商店自動同步
+
+`.github/workflows/sync-shop.yml` 每天 12:17（JST）抓 hololive production official shop，由 `tools/sync_shop.py` 把**新的商品頁**加到兩位成員的 CSV（也可以在 Actions 頁面手動執行）：
+
+- 只新增、不修改：已經在 CSV 裡的企劃一律不動（商店不會在既有商品頁加新變體），所以使用者的紀錄鍵不會錯位；下架的商品也會保留。
+- 新企劃依日期插入 `goods.csv` / `voice.csv`，待確認項目加在 `todo.csv` 最前面，`updates.csv` 自動加一列「官方商店新增 N 個企劃：…」。
+- 處理過的商品頁記在 `tools/shop_seen/<成員>.txt`，沒產生資料的商品頁（例如團體商品裡沒有本人）或已經從 todo 刪掉的項目，之後不會再被加回來。
+- 有新增時會開（或更新）`shop-sync` 分支的 PR，內文列出新企劃、各件商品與待確認項目。**合併前請人工確認**：變體是否真的是本人的（新成員的簡稱可能還不在 `tools/profiles.py` 的 `extra_other_names`）、`goods type` 是否需要補。這個分支每次執行都會從 main 重建，要修改請合併後在 main 上改。
+- BOOTH 與 FC 商店不在自動同步範圍內，仍用 `tools/` 的腳本手動更新（見 `tools/README.md`）。
+
 ### 周邊資料（data/goods.csv）
 
 欄位：`goods project code`、`goods project name`、`project type`、`date`、`goods official website`、`x link`、`goods index`、`goods name`、`goods type`、`price`、`goods picture`、`note`、`project note`、`oversea`。

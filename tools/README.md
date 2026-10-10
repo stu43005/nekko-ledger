@@ -18,6 +18,8 @@
 | `fetch_shop.py` | 下載官方商店 collection 的 `products.json`（每頁 250 筆，抓到空頁為止） |
 | `fetch_booth.py` | 下載 hololive BOOTH 商品列表與每個商品的 JSON（已快取的不會重抓） |
 | `fetch_fc.py` | 下載 FC 商店的商品列表 JSON、每個商品的公開詳細頁 HTML，並對列表圖片做 HEAD（記錄狀態與 `Last-Modified`）；已快取的不會重抓 |
+| `sync_shop.py` | 官方商店增量同步：只把新的商品頁加進已發佈的 CSV（GitHub Actions 每天執行，見下方） |
+| `shop_seen/<profile>.txt` | `sync_shop.py` 已處理過的商品 handle 清單 |
 | `validate.py` | 驗證輸出（欄位、索引、排序、價格、日期、網址與圖片網址格式；可選擇用網站本身的 JS parser 解析） |
 
 所有指令都在 repo 根目錄執行，Python 一律加 `-I`（isolated mode）。下載的原始資料請放在 repo **以外**的目錄（以下以 `$RAW` 表示），不要和腳本放在一起，也不要 commit。
@@ -48,6 +50,24 @@ python3 -I tools/validate.py suisei/data --site-parsers
 `--report` 會列出每個被排除的商品、BOOTH 重複判定、BOOTH 新增的企劃與 todo，以及 FC 商店的重複判定（`FCDUP`）、注意事項（`FCLOG`）與新增企劃（`FCGOODS`，含日期來源），建議重建後檢查一次。
 
 快取規則：`fetch_shop.py` / `fetch_booth.py` / `fetch_fc.py` 只要檔案已存在就不會重抓。要拿到最新資料，請先刪除對應的 `$RAW/shop/<handle>_p*.json`，或 BOOTH 的 `list/` 與 `ids.txt`（商品 JSON 本身不會變動，可保留），或 FC 的 `list/`（販售狀態有變時也請刪除 `detail/`）。
+
+## 官方商店增量同步（`sync_shop.py`）
+
+`build_dataset.py` 每次都整份重建，不適合用來更新已發佈的資料：既有企劃的序號一變，使用者的紀錄就會對到別的商品，下架的商品也會消失。已發佈的資料改用 `sync_shop.py` 增量更新：
+
+```sh
+python3 -I tools/fetch_shop.py "$RAW/shop" momosuzunene azki hoshimachisuisei
+cp -r suisei/data /tmp/before-suisei
+python3 -I tools/sync_shop.py suisei --shop-raw "$RAW/shop" --summary /tmp/summary.md
+python3 -I tools/validate.py suisei/data --before /tmp/before-suisei --site-parsers
+```
+
+- **新商品頁**：handle 不在 `shop_seen/<profile>.txt`，也不是 `goods.csv` / `voice.csv` 既有的企劃代碼。只有新商品頁會經過與 `build_dataset.py` 相同的規則（`Builder.build_shop`），其他商品頁完全不處理。
+- **插入位置**：goods 依日期插入（同日期的排在既有企劃之後），voice 依日期插入（同日期的排在既有列之後），todo 加在最前面；有新增 goods / voice 時，`updates.csv` 加一列（日期預設為 JST 今天，可用 `--date` 指定）。
+- **seen 清單**：執行後把 collection 內所有 handle 併入清單。清單不存在時會中止；新增成員時，用建立資料當時的原始資料執行 `--init-seen` 產生。
+- `--data` 預設為 profile 的 `data_dir`；`--summary` 會附加 Markdown 格式的新增清單（GitHub Actions 用來當 PR 內文）。
+- collection 抓到 0 筆時視為下載失敗並中止，不會當成「沒有新商品」。
+- `.github/workflows/sync-shop.yml` 的 `fetch_shop.py` 參數要包含每個 profile 的 `collection` 與 `name_collections`；新增成員時記得一起加。
 
 ## ねね版資料（`data/`）的注意事項
 
