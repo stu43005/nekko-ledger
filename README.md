@@ -24,9 +24,11 @@ data/todo.csv        尚未加入的周邊企劃
 
 ## 部署到 GitHub Pages
 
+網站網址：<https://nekko-ledger.shiaupiau.tw/>
+
 1. 把整個專案（含 `css/`、`js/`、`data/` 資料夾）放在 repo 根目錄。
 2. Settings → Pages → Source 選 `Deploy from a branch`，分支 `main`、資料夾 `/ (root)`。
-3. 幾分鐘後網址會是 `https://<帳號>.github.io/<repo>/`。
+3. 自訂網域寫在根目錄的 `CNAME` 檔（`nekko-ledger.shiaupiau.tw`）。DNS（Cloudflare）需要一筆 `CNAME nekko-ledger → stu43005.github.io`，建議設為 DNS only（灰雲），讓 GitHub 能簽發 HTTPS 憑證。
 
 本機預覽：網頁用 `fetch` 讀取 CSV，直接用 `file://` 開啟會被瀏覽器擋下，請在專案根目錄執行 `python3 -m http.server` 之類的靜態伺服器再開啟。
 
