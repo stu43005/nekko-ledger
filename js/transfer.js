@@ -147,6 +147,6 @@
   }
 
   const api = { encode, decode, qrSvg, ownedToText, textToOwned, MAX_PAYLOAD_CHARS };
-  root.AzkiTransfer = api;
+  root.NeneTransfer = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
