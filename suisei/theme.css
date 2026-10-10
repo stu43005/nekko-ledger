@@ -1,0 +1,44 @@
+/* 星街すいせい palette — loaded after ../css/style.css and overrides its colour variables.
+ * Base blue #003cff and #2457ff come from her official site (hoshimachi-suisei.jp, --color-blue-100 / -500).
+ * Dark-mode blocks must repeat every variable that style.css sets in its dark blocks (they have higher
+ * specificity than :root), otherwise Nene's warm values would leak through.
+ */
+:root {
+  --accent-deep: #002fc4;
+  --accent: #003cff;
+  --accent-bright: #2457ff;
+  --accent-text: #0033d6;
+  --accent-soft: #e6ecff;
+  --accent-faint: #f3f6ff;
+  --ink: #141a33;
+  --ink-soft: #4d5878;
+  --line: #cdd9f2;
+  --bg: #f7f9ff;
+  --header-glow: rgba(36, 87, 255, .16);
+  --header-glow2: rgba(0, 60, 255, .10);
+  --bar-bg: rgba(247, 249, 255, .92);
+  --shadow: 0 6px 24px rgba(0, 47, 196, .08);
+  --lb-shadow: 0 20px 60px rgba(20, 26, 51, .3);
+  --lb-backdrop: rgba(20, 26, 51, .6);
+}
+
+:root[data-theme="dark"] {
+  --accent: #3a68ff;
+  --accent-bright: #4a74ff;
+  --accent-text: #8fa8ff;
+  --accent-soft: #121a38;
+  --accent-faint: #0f1117;
+  --header-glow: rgba(36, 87, 255, .14);
+  --header-glow2: rgba(0, 60, 255, .10);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --accent: #3a68ff;
+    --accent-bright: #4a74ff;
+    --accent-text: #8fa8ff;
+    --accent-soft: #121a38;
+    --accent-faint: #0f1117;
+    --header-glow: rgba(36, 87, 255, .14);
+    --header-glow2: rgba(0, 60, 255, .10);
+  }
+}
